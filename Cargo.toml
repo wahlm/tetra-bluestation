@@ -10,8 +10,7 @@ num-complex = "0.4.6"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 rustfft = "6.4.0"
-
-soapysdr = { version = "0.4.2", git = "https://github.com/MidnightBlueLabs/rust-soapysdr", branch = "streamresult" }
+soapysdr = "0.4.4"
 
 # By default, we disable the lowest tracing events for performance
 # Remove the release_max_level feature to enable all tracing debug levels in release builds

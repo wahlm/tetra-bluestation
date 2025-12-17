@@ -1,12 +1,17 @@
 use soapysdr;
-use crate::entities::phy::{components::dsp_types, traits::rxtx_dev::RxTxDevError};
+
+use crate::entities::phy::traits::rxtx_dev::RxTxDevError;
+use super::dsp_types;
+use super::soapy_time::{ticks_to_time_ns, time_ns_to_ticks};
 use super::dsp_types::*;
 
 type StreamType = ComplexSample;
 
+#[derive(Debug)]
 pub enum Mode {
     Bs,
-    Monitor,
+    Ms, 
+    Mon,
 }
 
 struct SdrSettings<'a> {
@@ -203,14 +208,14 @@ impl SoapyIo {
                 dev.hardware_key().unwrap_or("-".to_string()).as_str(),
                 sdr_settings.name);
 
-        let fs = match mode {
-            Mode::Bs => sdr_settings.fs_bs,
-            Mode::Monitor => sdr_settings.fs_monitor,
+        let samp_rate = match mode {
+            Mode::Bs | Mode::Ms => sdr_settings.fs_bs,
+            Mode::Mon => sdr_settings.fs_monitor
         };
         let mut rx_fs: f64 = 0.0;
         if rx_enabled {
             soapycheck!("set RX sample rate",
-                dev.set_sample_rate(soapysdr::Direction::Rx, rx_ch, fs));
+                dev.set_sample_rate(soapysdr::Direction::Rx, rx_ch, samp_rate));
             // Read the actual sample rate obtained and store it
             // to avoid having to read it again every time it is needed.
             rx_fs = soapycheck!("get RX sample rate",
@@ -219,7 +224,7 @@ impl SoapyIo {
         let mut tx_fs: f64 = 0.0;
         if tx_enabled {
             soapycheck!("set TX sample rate",
-                dev.set_sample_rate(soapysdr::Direction::Tx, tx_ch, fs));
+                dev.set_sample_rate(soapysdr::Direction::Tx, tx_ch, samp_rate));
             tx_fs = soapycheck!("get TX sample rate",
                 dev.sample_rate(soapysdr::Direction::Tx, tx_ch));
         }
@@ -265,11 +270,11 @@ impl SoapyIo {
         let tx_args = soapysdr::Args::new();
         // hack to test the idea above, TODO properly
         match mode {
-            Mode::Bs => {
+            Mode::Bs | Mode::Ms => {
                 // Minimize latency
                 rx_args.set("latency", "0");
             },
-            Mode::Monitor => {
+            Mode::Mon => {
                 // Maximize throughput with high sample rates
                 rx_args.set("latency", "1");
             }
@@ -310,30 +315,27 @@ impl SoapyIo {
     }
 
     pub fn receive(&mut self, buffer: &mut [StreamType]) -> Result<RxResult, RxTxDevError> {
-        if let Some(rx) = &mut self.rx {
-            match rx.read_with_stream_result(&mut [buffer], soapysdr::StreamFlags::default(), 1000000) {
-                Ok(result) => {
+        if let Some(rx) = &mut self.rx {       
+            // RX is enabled     
+            match rx.read(&mut [buffer], 1000000) {
+                Ok(len) => {
+                    // Get timestamp, set initial time if not yet set
+                    let time = rx.time_ns();
                     if self.initial_time.is_none() {
-                        if let Some(time) = result.time {
-                            // If the first read did not include a timestamp but a following one does,
-                            // compute actual initial timestamp value
-                            // from the number of samples received so far.
-                            self.initial_time = Some(time - soapysdr::ticks_to_time_ns(self.rx_next_count, self.rx_fs));
-                            tracing::trace!("Set initial_time to {} ns", self.initial_time.unwrap());
-                        };
-                    }
-                    let count = if let Some(time) = result.time {
-                        // unwrap is fine since self.initial_time is already Some at this point.
-                        soapysdr::time_ns_to_ticks(time - self.initial_time.unwrap(), self.rx_fs)
-                    } else {
-                        self.rx_next_count
+                        self.initial_time = Some(time - ticks_to_time_ns(self.rx_next_count, self.rx_fs));
+                        tracing::trace!("Set initial_time to {} ns", self.initial_time.unwrap());
                     };
+
+                    // Re-compute total count from timestamp (gracefully handles lost samples)
+                    let count = time_ns_to_ticks(time - self.initial_time.unwrap(), self.rx_fs);
+
                     // Store expected sample count for the next sample to be read.
                     // This is used in case timestamp is missing.
-                    self.rx_next_count = count + result.len as SampleCount;
+                    self.rx_next_count = count + len as SampleCount;
+
                     Ok(RxResult {
-                        len: result.len,
-                        count,
+                        len,
+                        count
                     })
                 },
                 Err(_) => Err(RxTxDevError::RxReadError),
@@ -349,7 +351,7 @@ impl SoapyIo {
             if let Some(initial_time) = self.initial_time {
                 tx.write_all(&[buffer],
                     count.map(|count|
-                        initial_time + soapysdr::ticks_to_time_ns(count, self.tx_fs)
+                        initial_time + ticks_to_time_ns(count, self.tx_fs)
                     ),
                     false, 1000000
                 ).map_err(|_| RxTxDevError::RxReadError)
@@ -371,7 +373,7 @@ impl SoapyIo {
     pub fn rx_current_count(&self) -> Result<SampleCount, RxTxDevError> {
         if !self.rx_enabled() { return Ok(0); }
         if self.use_get_hardware_time {
-            Ok(soapysdr::time_ns_to_ticks(
+            Ok(time_ns_to_ticks(
                 self.current_time()? - self.initial_time.unwrap_or(0),
                 self.rx_fs
             ))
@@ -384,7 +386,7 @@ impl SoapyIo {
     pub fn tx_current_count(&self) -> Result<SampleCount, RxTxDevError> {
         if !self.tx_enabled() { return Ok(0); }
         if self.use_get_hardware_time {
-            Ok(soapysdr::time_ns_to_ticks(
+            Ok(time_ns_to_ticks(
                 self.current_time()? - self.initial_time.unwrap_or(0),
                 self.tx_fs
             ))

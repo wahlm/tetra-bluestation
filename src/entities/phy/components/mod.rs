@@ -9,6 +9,7 @@ pub mod fir;
 pub mod history;
 pub mod modem_common;
 pub mod modulator;
+pub mod soapy_time;
 pub mod soapyio;
 
 pub mod rxtxdev_soapysdr;

@@ -511,10 +511,10 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "soapysdr"
-version = "0.4.2"
-source = "git+https://github.com/MidnightBlueLabs/rust-soapysdr?branch=streamresult#be36d259ff29133b1006200a0fffac1500d22bdb"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4e27f3a441e059e1a79f2b7802a00f3c7ecb1a5561b62bd7f11452f2cc87e8"
 dependencies = [
- "bitflags",
  "log",
  "num-complex",
  "soapysdr-sys",
@@ -523,7 +523,8 @@ dependencies = [
 [[package]]
 name = "soapysdr-sys"
 version = "0.7.5"
-source = "git+https://github.com/MidnightBlueLabs/rust-soapysdr?branch=streamresult#be36d259ff29133b1006200a0fffac1500d22bdb"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abb5e50f86d0bf0c3312b77fce8737f760ce30adfa22baae97ffdd66a939356b"
 dependencies = [
  "bindgen",
  "cc",

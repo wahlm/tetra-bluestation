@@ -51,7 +51,7 @@ impl RxTxDevSoapySdr {
             sdr_config.rx_freq,
             sdr_config.tx_freq,
             if !phy_config.monitor_frequencies.is_empty() {
-                soapyio::Mode::Monitor
+                soapyio::Mode::Mon
             } else {
                 soapyio::Mode::Bs
             },
@@ -257,11 +257,11 @@ impl RxDsp {
             } else {
                 self.rx_buffer_i += result.len;
                 if self.rx_buffer_i == self.rx_buffer.len() {
-                    tracing::trace!("Received processing block {} ({} samples in SDR buffer)",
-                        self.rx_block_count,
-                        // incorrect if time is not available but does not really matter
-                        sdr.rx_current_count().unwrap_or(0) - (result.count + result.len as SampleCount - 1),
-                    );
+                    // tracing::trace!("Received processing block {} ({} samples in SDR buffer)",
+                    //     self.rx_block_count,
+                    //     // incorrect if time is not available but does not really matter
+                    //     sdr.rx_current_count().unwrap_or(0) - (result.count + result.len as SampleCount - 1),
+                    // );
                     return Ok(())
                 }
             }
@@ -386,10 +386,10 @@ impl TxDsp {
 
         sdr.transmit(tx_signal, Some(sdr_sample_count))?;
 
-        tracing::trace!("Produced transmit block {} ({} samples in future)",
-            self.block_count - 1,
-            sdr_sample_count - sdr.tx_current_count().unwrap_or(0),
-        );
+        // tracing::trace!("Produced transmit block {} ({} samples in future)",
+        //     self.block_count - 1,
+        //     sdr_sample_count - sdr.tx_current_count().unwrap_or(0),
+        // );
 
         Ok(true)
     }
