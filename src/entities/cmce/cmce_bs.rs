@@ -5,6 +5,7 @@ use crate::saps::sapmsg::{SapMsg, SapMsgInner};
 use crate::common::tetra_entities::TetraEntity;
 use crate::entities::TetraEntityTrait;
 use crate::common::tetra_common::Sap;
+use crate::unimplemented_log;
 
 use super::subentities::cc::CcSubentity;
 use super::subentities::sds::SdsSubentity;
@@ -44,7 +45,7 @@ impl CmceBs {
 
         tracing::debug!("CmceBs rx_unitdata_ind for pdu_type {:?}", pdu_type);
 
-        unimplemented!();
+        unimplemented_log!("{:?}", pdu_type);
     }
 }
 
