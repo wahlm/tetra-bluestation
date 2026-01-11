@@ -129,9 +129,9 @@ impl UmacBs {
             ms_txpwr_max_cell: 5,
             rxlev_access_min: 3,
             access_parameter: 7,
-            radio_dl_timeout: 3,
-            cck_id: Some(1), // TODO FIXME change to Some() when we enable encryption
-            hyperframe_number: None,
+            radio_dl_timeout: 15,
+            cck_id: None,
+            hyperframe_number: Some(0),
             option_field: SysinfoOptFieldFlag::DefaultDefForAccCodeA,
             ts_common_frames: None,
             default_access_code: Some(def_access),
@@ -150,7 +150,7 @@ impl UmacBs {
             access_parameter: sysinfo1.access_parameter,
             radio_dl_timeout: sysinfo1.radio_dl_timeout,
             cck_id: None,
-            hyperframe_number: Some(0),
+            hyperframe_number: Some(0), // Updated dynamically in scheduler
             option_field: SysinfoOptFieldFlag::ExtServicesBroadcast,
             ts_common_frames: None,
             default_access_code: None,

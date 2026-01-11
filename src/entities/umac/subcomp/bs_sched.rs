@@ -102,7 +102,7 @@ impl BsChannelScheduler {
     }
 
     pub fn ts_to_sched_index(&self, ts: &TdmaTime) -> usize {
-        let to_index = (ts.f as usize - 1) + ((ts.m as usize - 1) * 18) + ((ts.h as usize* 18 * 60));
+        let to_index = (ts.f as usize - 1) + ((ts.m as usize - 1) * 18) + ((ts.h as usize * 18 * 60));
         to_index % MACSCHED_NUM_FRAMES       
     }
 
@@ -715,47 +715,64 @@ impl BsChannelScheduler {
         //     if elem.blk1.is_some() { "blk1 " } else { "" },
         //     if elem.blk2.is_some() { "blk2 " } else { "" });
 
-        // Check if blk1 populated. If not, we put a sync block. 
+        // Populate blk1 if empty: BSCH on frame 18, SCH/HD on other frames
         if elem.blk1.is_none() {
+            if ts.f == 18 {
+                // Frame 18: BSCH (SDB burst) with SYNC
+                let mut buf = BitBuffer::new(60);
+                if let Some(ref mut precomps) = self.precomps {
+                    precomps.mac_sync.time = ts;
+                    precomps.mac_sync.to_bitbuf(&mut buf);
+                    precomps.mle_sync.to_bitbuf(&mut buf);
+                } else {
+                    panic!("precomps not available");
+                };
 
-            // Update time and write MAC-SYNC and MLE-SYNC to blk1
-            // tracing::trace!("finalize_ts_for_tick: putting default SYNC");
-            let mut buf = BitBuffer::new(60); // Exactly 60
-            if let Some(ref mut precomps) = self.precomps {
-                precomps.mac_sync.time = ts;
-                precomps.mac_sync.to_bitbuf(&mut buf);
-                precomps.mle_sync.to_bitbuf(&mut buf);
-            } else { panic!("precomps not available"); };
-            
-            elem.blk1 = Some(TmvUnitdataReq {
-                logical_channel: LogicalChannel::Bsch,
-                mac_block: buf,
-                scrambling_code: SCRAMB_INIT,
-            });
+                elem.blk1 = Some(TmvUnitdataReq {
+                    logical_channel: LogicalChannel::Bsch,
+                    mac_block: buf,
+                    scrambling_code: SCRAMB_INIT,
+                });
+            } else {
+                // Frames 1-17: SCH/HD (NDB burst) with NULL PDU
+                let mut buf = BitBuffer::new(124);
+                let mut pdu = MacResource {
+                    fill_bits: false,
+                    length_ind: 2,
+                    addr: None,
+                    ..Default::default()
+                };
+                let _ = pdu.update_len_and_fill_ind(0);
+                pdu.to_bitbuf(&mut buf);
+
+                elem.blk1 = Some(TmvUnitdataReq {
+                    logical_channel: LogicalChannel::SchHd,
+                    mac_block: buf,
+                    scrambling_code: self.scrambling_code.unwrap(),
+                });
+            }
         }
 
         // Check if second block may still be populated (blk1 is half-slot and blk2 is None)
         let blk1_lchan = elem.blk1.as_ref().unwrap().logical_channel;
         assert!(blk1_lchan != LogicalChannel::Stch, "unimplemented");
 
+        // Populate blk2 with SYSINFO if blk1 is half-slot
         if elem.blk2.is_none() && (blk1_lchan == LogicalChannel::Bsch || blk1_lchan == LogicalChannel::SchHd || blk1_lchan == LogicalChannel::Stch) {
             
-            // tracing::trace!("finalize_ts_for_tick: putting default SYSINFO");
-
             // Check blk1 is indeed short (124 for half-slot or 60 for SYNC)
             assert!(elem.blk1.as_ref().unwrap().mac_block.get_len() <= SCH_HD_CAP);
-            
             let mut buf = BitBuffer::new(SCH_HD_CAP); // Exactly 124
             
-            // Write MAC-SYSINFO
+            // Update hyperframe and write MAC-SYSINFO (alternating sysinfo1/sysinfo2)
+            let precomps = self.precomps.as_mut().unwrap();
             if ts.t % 2 == 1 {
-                // Odd ts, write sysinfo1
-                self.precomps.as_ref().unwrap().mac_sysinfo1.to_bitbuf(&mut buf);
+                precomps.mac_sysinfo1.hyperframe_number = Some(ts.h);
+                precomps.mac_sysinfo1.to_bitbuf(&mut buf);
             } else {
-                // Even ts, write sysinfo2
-                self.precomps.as_ref().unwrap().mac_sysinfo2.to_bitbuf(&mut buf);
+                precomps.mac_sysinfo2.hyperframe_number = Some(ts.h);
+                precomps.mac_sysinfo2.to_bitbuf(&mut buf);
             }
-            // Append MLE-SYSINFO and store blk2
             self.precomps.as_ref().unwrap().mle_sysinfo.to_bitbuf(&mut buf);
 
             elem.blk2 = Some(TmvUnitdataReq {
@@ -877,7 +894,7 @@ mod tests {
             ms_txpwr_max_cell: 5,
             rxlev_access_min: 3,
             access_parameter: 7,
-            radio_dl_timeout: 3,
+            radio_dl_timeout: 15,
             cck_id: None,
             hyperframe_number: Some(0),
             option_field: SysinfoOptFieldFlag::DefaultDefForAccCodeA,
