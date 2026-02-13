@@ -506,7 +506,7 @@ impl BrewEntity {
             self.active_calls.insert(uuid, call);
 
             // Send D-TX GRANTED to reactivate MS U-plane for new speaker (EN 300 392-2, §14.5.2.2.1b).
-            self.send_d_tx_granted(queue, call_id, source_issi, dest_gssi);
+            self.send_d_tx_granted(queue, call_id, source_issi, dest_gssi, hanging.ts);
             return;
         }
 
@@ -752,7 +752,7 @@ impl BrewEntity {
         );
 
         // Send D-TX CEASED to signal end of current transmission (EN 300 392-2, 14.7.1.13)
-        self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi);
+        self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi, call.ts);
 
         // Finalize any existing hanging call for this GSSI before replacing.
         if let Some(old) = self.hanging_calls.remove(&call.dest_gssi) {
@@ -829,7 +829,7 @@ impl BrewEntity {
     }
 
     /// Send D-TX CEASED via FACCH/STCH to signal transmission end.
-    fn send_d_tx_ceased(&self, queue: &mut MessageQueue, call_id: u16, dest_gssi: u32) {
+    fn send_d_tx_ceased(&self, queue: &mut MessageQueue, call_id: u16, dest_gssi: u32, ts: u8) {
         let d_tx_ceased = DTxCeased {
             call_identifier: call_id,
             transmission_request_permission: true,
@@ -840,9 +840,10 @@ impl BrewEntity {
         };
 
         tracing::info!(
-            "BrewEntity: -> D-TX CEASED call_id={} gssi={} (via FACCH)",
+            "BrewEntity: -> D-TX CEASED call_id={} gssi={} ts={} (via FACCH)",
             call_id,
-            dest_gssi
+            dest_gssi,
+            ts
         );
 
         let mut sdu = BitBuffer::new_autoexpand(32);
@@ -867,7 +868,7 @@ impl BrewEntity {
                 layer2_qos: 0,
                 stealing_permission: true,
                 stealing_repeats_flag: false,
-                chan_alloc: None,
+                chan_alloc: Some(Self::stealing_chan_alloc(ts)),
                 main_address: TetraAddress::new(dest_gssi, SsiType::Gssi),
             }),
         };
@@ -881,6 +882,7 @@ impl BrewEntity {
         call_id: u16,
         source_issi: u32,
         dest_gssi: u32,
+        ts: u8,
     ) {
         let d_tx_granted = DTxGranted {
             call_identifier: call_id,
@@ -899,10 +901,11 @@ impl BrewEntity {
         };
 
         tracing::info!(
-            "BrewEntity: -> D-TX GRANTED call_id={} gssi={} src={} (via FACCH)",
+            "BrewEntity: -> D-TX GRANTED call_id={} gssi={} src={} ts={} (via FACCH)",
             call_id,
             dest_gssi,
-            source_issi
+            source_issi,
+            ts
         );
 
         let mut sdu = BitBuffer::new_autoexpand(64);
@@ -927,11 +930,26 @@ impl BrewEntity {
                 layer2_qos: 0,
                 stealing_permission: true,
                 stealing_repeats_flag: false,
-                chan_alloc: None,
+                chan_alloc: Some(Self::stealing_chan_alloc(ts)),
                 main_address: TetraAddress::new(dest_gssi, SsiType::Gssi),
             }),
         };
         queue.push_back(msg);
+    }
+
+    /// Build a CmceChanAllocReq that just carries the target timeslot for FACCH stealing.
+    fn stealing_chan_alloc(ts: u8) -> CmceChanAllocReq {
+        let mut timeslots = [false; 4];
+        if ts >= 1 && ts <= 4 {
+            timeslots[(ts - 1) as usize] = true;
+        }
+        CmceChanAllocReq {
+            usage: None,
+            carrier: None,
+            timeslots,
+            alloc_type: ChanAllocType::Replace,
+            ul_dl_assigned: UlDlAssignment::Both,
+        }
     }
 
     /// Build and send a D-RELEASE PDU
@@ -1080,7 +1098,7 @@ impl BrewEntity {
         // Finalize all active calls immediately (no hangtime on disconnect)
         let calls: Vec<(Uuid, ActiveCall)> = self.active_calls.drain().collect();
         for (_, call) in calls {
-            self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi);
+            self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi, call.ts);
             self.finalize_call(queue, call.call_id, call.ts, call.dest_gssi);
         }
 
