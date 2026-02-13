@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use tetra_config::{PhyBackend, SharedConfig, StackMode, toml_config};
@@ -122,5 +124,14 @@ fn main() {
         StackMode::Bs => build_bs_stack(&mut cfg),
     };
 
-    router.run_stack(None);
+    // Set up Ctrl+C handler for graceful shutdown
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    })
+    .expect("failed to set Ctrl+C handler");
+
+    router.run_stack(None, Some(running));
+    // router drops here → entities are dropped → BrewEntity::Drop fires teardown
 }

@@ -202,7 +202,7 @@ impl ComponentTest {
     }
 
     pub fn run_stack(&mut self, num_ticks: Option<usize>) {
-        self.router.run_stack(num_ticks);
+        self.router.run_stack(num_ticks, None);
     }
 
     pub fn submit_message(&mut self, message: SapMsg) {
