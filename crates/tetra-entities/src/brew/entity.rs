@@ -40,9 +40,8 @@ use super::worker::{BrewCommand, BrewConfig, BrewEvent, BrewWorker};
 /// Hangtime before releasing group call circuit to allow reuse without re-signaling.
 const GROUP_CALL_HANGTIME: Duration = Duration::from_secs(1);
 
-// ─── Active call tracking ─────────────────────────────────────────
 
-/// Tracks the state of a single active Brew group call (currently transmitting)
+/// Active call tracking - Tracks the state of a single active Brew group call (currently transmitting)
 #[derive(Debug)]
 struct ActiveCall {
     /// Brew session UUID
