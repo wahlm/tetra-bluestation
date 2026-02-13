@@ -1177,9 +1177,21 @@ impl UmacBs {
         // (D-TX CEASED, D-TX GRANTED) per EN 300 392-2, clause 23.5.
         // CRITICAL: DL STCH uses MAC-RESOURCE (124-bit half-slot), NOT MAC-U-SIGNAL (UL-only).
         if prim.stealing_permission {
-            // Find the traffic timeslot (first active DL circuit on TS2-4)
-            let traffic_ts =
-                (2..=4u8).find(|&t| self.channel_scheduler.circuit_is_active(Direction::Dl, t));
+            // Determine the target traffic timeslot for FACCH stealing.
+            // If chan_alloc specifies a timeslot, use it; otherwise fall back to first active DL circuit.
+            let traffic_ts = prim
+                .chan_alloc
+                .as_ref()
+                .and_then(|ca| {
+                    ca.timeslots
+                        .iter()
+                        .enumerate()
+                        .find(|&(_, &set)| set)
+                        .map(|(i, _)| (i + 1) as u8)
+                })
+                .or_else(|| {
+                    (2..=4u8).find(|&t| self.channel_scheduler.circuit_is_active(Direction::Dl, t))
+                });
 
             if let Some(ts) = traffic_ts {
                 // Build MAC-RESOURCE PDU for the STCH half-slot (124 type1 bits).
