@@ -538,6 +538,28 @@ impl BrewWorker {
         Ok(())
     }
 
+    /// Graceful teardown: DEAFFILIATE → DEREGISTER → WS close
+    fn graceful_teardown(&self, ws: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
+        if !self.config.groups.is_empty() {
+            let deaff_msg = build_subscriber_deaffiliate(self.config.issi, &self.config.groups);
+            if let Err(e) = ws.send(Message::Binary(deaff_msg.into())) {
+                tracing::error!("BrewWorker: failed to send deaffiliation: {}", e);
+            } else {
+                tracing::info!(
+                    "BrewWorker: deaffiliated from groups {:?}",
+                    self.config.groups
+                );
+            }
+        }
+        let dereg_msg = build_subscriber_deregister(self.config.issi);
+        if let Err(e) = ws.send(Message::Binary(dereg_msg.into())) {
+            tracing::error!("BrewWorker: failed to send deregistration: {}", e);
+        } else {
+            tracing::info!("BrewWorker: deregistered ISSI {}", self.config.issi);
+        }
+        let _ = ws.close(None);
+    }
+
     /// Main WebSocket message processing loop
     fn message_loop(
         &mut self,
@@ -577,7 +599,19 @@ impl BrewWorker {
             }
 
             // ── Check for commands from the BrewEntity ──
-            while let Ok(cmd) = self.command_receiver.try_recv() {
+            loop {
+                let cmd = match self.command_receiver.try_recv() {
+                    Ok(cmd) => cmd,
+                    Err(crossbeam_channel::TryRecvError::Empty) => break,
+                    Err(crossbeam_channel::TryRecvError::Disconnected) => {
+                        // Entity was dropped — do graceful teardown
+                        tracing::info!(
+                            "BrewWorker: command channel closed, performing graceful teardown"
+                        );
+                        self.graceful_teardown(ws);
+                        return Ok(());
+                    }
+                };
                 match cmd {
                     BrewCommand::RegisterSubscriber { issi } => {
                         let msg = build_subscriber_register(issi, &[]);
@@ -661,7 +695,7 @@ impl BrewWorker {
                         }
                     }
                     BrewCommand::Disconnect => {
-                        let _ = ws.close(None);
+                        self.graceful_teardown(ws);
                         return Ok(());
                     }
                 }

@@ -127,6 +127,9 @@ pub struct BrewEntity {
 
     /// Whether the worker is connected
     connected: bool,
+
+    /// Worker thread handle for graceful shutdown
+    worker_handle: Option<thread::JoinHandle<()>>,
 }
 
 impl BrewEntity {
@@ -137,7 +140,7 @@ impl BrewEntity {
 
         // Spawn worker thread
         let worker_config = brew_config;
-        thread::Builder::new()
+        let handle = thread::Builder::new()
             .name("brew-worker".to_string())
             .spawn(move || {
                 let mut worker = BrewWorker::new(worker_config, event_sender, command_receiver);
@@ -158,6 +161,7 @@ impl BrewEntity {
             next_call_id: 100, // Start at 100 to avoid collision with CMCE
             next_usage: 10,    // Start at 10 to avoid collision
             connected: false,
+            worker_handle: Some(handle),
         }
     }
 
@@ -1297,5 +1301,30 @@ impl BrewEntity {
             length_bits: (ste_data.len() * 8) as u16,
             data: ste_data,
         });
+    }
+}
+
+impl Drop for BrewEntity {
+    fn drop(&mut self) {
+        tracing::info!("BrewEntity: shutting down, sending graceful disconnect");
+        let _ = self.command_sender.send(BrewCommand::Disconnect);
+
+        // Give the worker thread time to send DEAFFILIATE + DEREGISTER and close
+        if let Some(handle) = self.worker_handle.take() {
+            let timeout = std::time::Duration::from_secs(3);
+            let start = std::time::Instant::now();
+            loop {
+                if handle.is_finished() {
+                    let _ = handle.join();
+                    tracing::info!("BrewEntity: worker thread joined cleanly");
+                    break;
+                }
+                if start.elapsed() >= timeout {
+                    tracing::warn!("BrewEntity: worker thread did not finish in time, abandoning");
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+        }
     }
 }
