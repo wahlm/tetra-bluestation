@@ -58,8 +58,14 @@ pub enum BrewCommand {
     /// Register a subscriber (ISSI)
     RegisterSubscriber { issi: u32 },
 
+    /// Deregister a subscriber (ISSI)
+    DeregisterSubscriber { issi: u32 },
+
     /// Affiliate subscriber to groups
     AffiliateGroups { issi: u32, groups: Vec<u32> },
+
+    /// Deaffiliate subscriber from groups
+    DeaffiliateGroups { issi: u32, groups: Vec<u32> },
 
     /// Send GROUP_TX to TetraPack (local radio started transmitting on subscribed group)
     SendGroupTx {
@@ -517,17 +523,16 @@ impl BrewWorker {
         ws: &mut WebSocket<MaybeTlsStream<TcpStream>>,
     ) -> Result<(), String> {
         // Register ISSI
-        let reg_msg = build_subscriber_register(self.config.issi, &self.config.groups);
+        let reg_msg = build_subscriber_register(self.config.issi, &[]);
         ws.send(Message::Binary(reg_msg.into()))
             .map_err(|e| format!("failed to send registration: {}", e))?;
         tracing::info!("BrewWorker: registered ISSI {}", self.config.issi);
 
-        // Affiliate to groups
         if !self.config.groups.is_empty() {
-            let aff_msg = build_subscriber_affiliate(self.config.issi, &self.config.groups);
-            ws.send(Message::Binary(aff_msg.into()))
-                .map_err(|e| format!("failed to send affiliation: {}", e))?;
-            tracing::info!("BrewWorker: affiliated to groups {:?}", self.config.groups);
+            tracing::debug!(
+                "BrewWorker: config.groups is set but initial affiliation is disabled (dynamic listeners only): {:?}",
+                self.config.groups
+            );
         }
 
         Ok(())
@@ -578,12 +583,40 @@ impl BrewWorker {
                         let msg = build_subscriber_register(issi, &[]);
                         if let Err(e) = ws.send(Message::Binary(msg.into())) {
                             tracing::error!("BrewWorker: failed to send registration: {}", e);
+                        } else {
+                            tracing::debug!("BrewWorker: sent REGISTER issi={}", issi);
+                        }
+                    }
+                    BrewCommand::DeregisterSubscriber { issi } => {
+                        let msg = build_subscriber_deregister(issi);
+                        if let Err(e) = ws.send(Message::Binary(msg.into())) {
+                            tracing::error!("BrewWorker: failed to send deregistration: {}", e);
+                        } else {
+                            tracing::debug!("BrewWorker: sent DEREGISTER issi={}", issi);
                         }
                     }
                     BrewCommand::AffiliateGroups { issi, groups } => {
                         let msg = build_subscriber_affiliate(issi, &groups);
                         if let Err(e) = ws.send(Message::Binary(msg.into())) {
                             tracing::error!("BrewWorker: failed to send affiliation: {}", e);
+                        } else {
+                            tracing::debug!(
+                                "BrewWorker: sent AFFILIATE issi={} groups={:?}",
+                                issi,
+                                groups
+                            );
+                        }
+                    }
+                    BrewCommand::DeaffiliateGroups { issi, groups } => {
+                        let msg = build_subscriber_deaffiliate(issi, &groups);
+                        if let Err(e) = ws.send(Message::Binary(msg.into())) {
+                            tracing::error!("BrewWorker: failed to send deaffiliation: {}", e);
+                        } else {
+                            tracing::debug!(
+                                "BrewWorker: sent DEAFFILIATE issi={} groups={:?}",
+                                issi,
+                                groups
+                            );
                         }
                     }
                     BrewCommand::SendGroupTx {
@@ -643,7 +676,12 @@ impl BrewWorker {
                 BrewMessage::CallControl(cc) => self.handle_call_control(cc),
                 BrewMessage::Frame(frame) => self.handle_frame(frame),
                 BrewMessage::Subscriber(sub) => {
-                    tracing::debug!("BrewWorker: subscriber event type={}", sub.msg_type);
+                    tracing::debug!(
+                        "BrewWorker: subscriber event type={} issi={} groups={:?}",
+                        sub.msg_type,
+                        sub.number,
+                        sub.groups
+                    );
                     let _ = self.event_sender.send(BrewEvent::SubscriberEvent {
                         msg_type: sub.msg_type,
                         issi: sub.number,

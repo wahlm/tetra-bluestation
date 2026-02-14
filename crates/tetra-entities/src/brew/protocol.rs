@@ -369,6 +369,39 @@ pub fn build_subscriber_affiliate(issi: u32, groups: &[u32]) -> Vec<u8> {
     buf
 }
 
+/// Build a subscriber de-affiliation message
+pub fn build_subscriber_deaffiliate(issi: u32, groups: &[u32]) -> Vec<u8> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+
+    let mut buf = Vec::with_capacity(18 + groups.len() * 4);
+    buf.push(BREW_CLASS_SUBSCRIBER);
+    buf.push(BREW_SUBSCRIBER_DEAFFILIATE);
+    write_u32_le(&mut buf, issi);
+    write_u64_le(&mut buf, now.as_secs());
+    write_u32_le(&mut buf, now.subsec_nanos());
+    for &gssi in groups {
+        write_u32_le(&mut buf, gssi);
+    }
+    buf
+}
+
+/// Build a subscriber deregistration message
+pub fn build_subscriber_deregister(issi: u32) -> Vec<u8> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+
+    let mut buf = Vec::with_capacity(18);
+    buf.push(BREW_CLASS_SUBSCRIBER);
+    buf.push(BREW_SUBSCRIBER_DEREGISTER);
+    write_u32_le(&mut buf, issi);
+    write_u64_le(&mut buf, now.as_secs());
+    write_u32_le(&mut buf, now.subsec_nanos());
+    buf
+}
+
 /// Build a group call transmission start message (GROUP_TX)
 /// Sent when a local radio starts transmitting on a subscribed group
 pub fn build_group_tx(

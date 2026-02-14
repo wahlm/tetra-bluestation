@@ -60,6 +60,15 @@ impl MmClientMgr {
         self.clients.contains_key(&issi)
     }
 
+    pub fn set_client_state(&mut self, issi: u32, state: MmClientState) -> Result<(), ClientMgrErr> {
+        if let Some(client) = self.clients.get_mut(&issi) {
+            client.state = state;
+            Ok(())
+        } else {
+            Err(ClientMgrErr::ClientNotFound { issi })
+        }
+    }
+
     /// Registers a fresh state for a client, based on ssi
     /// If client is already registered, previous state is discarded. 
     pub fn try_register_client(&mut self, issi: u32, attached: bool) -> Result <bool, ClientMgrErr> {
@@ -109,12 +118,12 @@ impl MmClientMgr {
         };
 
         if let Some(client) = self.clients.get_mut(&issi) {
-            if do_attach {
-                client.groups.insert(gssi);
+            let changed = if do_attach {
+                client.groups.insert(gssi)
             } else {
-                client.groups.remove(&gssi);
-            }
-            Ok(true)
+                client.groups.remove(&gssi)
+            };
+            Ok(changed)
         } else {
             Err(ClientMgrErr::ClientNotFound { issi })
         }
