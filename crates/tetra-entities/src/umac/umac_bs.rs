@@ -1345,7 +1345,7 @@ impl UmacBs {
                     );
                 }
             }
-            // UL voice from LMAC → loopback to DL for group call repeater
+            // UL voice from LMAC → forward to Brew + optional loopback to DL
             SapMsgInner::TmdCircuitDataInd(prim) => {
                 let ts = prim.ts;
                 let data = prim.data;
@@ -1630,16 +1630,21 @@ impl TetraEntityTrait for UmacBs {
     }
 }
 
+/// Pack UL ACELP voice bits (274 bits, one-bit-per-byte) into packed byte array for DL transmission.
+/// Handles both already-packed (35 bytes) and unpacked (274 bytes) formats.
 fn pack_ul_acelp_bits(bits: &[u8]) -> Option<Vec<u8>> {
     const PACKED_TCH_S_BYTES: usize = (TCH_S_CAP + 7) / 8;
 
+    // Already packed format — pass through
     if bits.len() == PACKED_TCH_S_BYTES {
         return Some(bits.to_vec());
     }
+    // Insufficient data
     if bits.len() < TCH_S_CAP {
         return None;
     }
 
+    // Pack 274 one-bit-per-byte into 35 bytes (last byte has 2 padding bits)
     let mut out = Vec::with_capacity(PACKED_TCH_S_BYTES);
     for chunk_idx in 0..PACKED_TCH_S_BYTES {
         let mut byte = 0u8;

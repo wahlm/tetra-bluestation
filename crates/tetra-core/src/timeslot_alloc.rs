@@ -7,8 +7,13 @@ pub enum TimeslotOwner {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TimeslotAllocErr {
     InvalidTimeslot(u8),
-    InUse { ts: u8, owner: TimeslotOwner },
-    NotAllocated { ts: u8 },
+    InUse {
+        ts: u8,
+        owner: TimeslotOwner,
+    },
+    NotAllocated {
+        ts: u8,
+    },
     OwnerMismatch {
         ts: u8,
         owner: TimeslotOwner,
@@ -56,7 +61,10 @@ impl TimeslotAllocator {
                 self.owners[idx] = Some(owner);
                 Ok(())
             }
-            Some(existing) => Err(TimeslotAllocErr::InUse { ts, owner: existing }),
+            Some(existing) => Err(TimeslotAllocErr::InUse {
+                ts,
+                owner: existing,
+            }),
         }
     }
 

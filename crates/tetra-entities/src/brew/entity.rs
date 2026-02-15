@@ -7,7 +7,8 @@ use std::time::{Duration, Instant};
 use crossbeam_channel::{Receiver, Sender, unbounded};
 use uuid::Uuid;
 
-use tetra_config::{SharedConfig, TimeslotOwner};
+use tetra_config::SharedConfig;
+use tetra_core::TimeslotOwner;
 use tetra_core::{
     BitBuffer, Direction, Sap, SsiType, TdmaTime, TetraAddress, tetra_entities::TetraEntity,
 };
@@ -167,6 +168,7 @@ impl BrewEntity {
 
     /// Allocate a free timeslot for a new call. Returns (timeslot, call_id, usage) or None.
     fn allocate_timeslot(&mut self) -> Option<(u8, u16, u8)> {
+        // Use centralized timeslot allocator to avoid collision with CMCE
         let ts = {
             let mut state = self.config.state_write();
             state.timeslot_alloc.allocate_any(TimeslotOwner::Brew)?

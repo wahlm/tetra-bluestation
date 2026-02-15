@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use tetra_config::{SharedConfig, TimeslotOwner};
+use tetra_config::SharedConfig;
+use tetra_core::TimeslotOwner;
 use tetra_core::{
     BitBuffer, Direction, Sap, SsiType, TdmaTime, TetraAddress, tetra_entities::TetraEntity,
     unimplemented_log,
@@ -1078,6 +1079,24 @@ impl CcBsSubentity {
 
         let msg = Self::build_sapmsg_stealing(sdu, self.dltime, dest_addr);
         queue.push_back(msg);
+
+        // Notify Brew entity about the speaker change (new LocalCallStart for new speaker)
+        let Some(call) = self.active_calls.get(&call_id) else {
+            return;
+        };
+        let notify = SapMsg {
+            sap: Sap::Control,
+            src: TetraEntity::Cmce,
+            dest: TetraEntity::Brew,
+            dltime: self.dltime,
+            msg: SapMsgInner::CmceCallControl(CallControl::LocalCallStart {
+                call_id,
+                source_issi: requesting_party.ssi,
+                dest_gssi: dest_addr.ssi,
+                ts: call.ts,
+            }),
+        };
+        queue.push_back(notify);
     }
 
     /// Handle U-RELEASE: radio explicitly releases the call
