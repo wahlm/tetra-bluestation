@@ -1,0 +1,24 @@
+# systemd service file for tetra-bluestation
+#
+# (either get root or add "sudo" to each command)
+# copy to "/etc/systemd/system" and adapt your pathes
+# execute "systemctl daemon-reload"
+# start service with "systemctl start tetra-bluestation.service"
+# show state with "systemctl status tetra-bluestation.service"
+# stop service with "systemctl stop tetra-bluestation.service"
+# to enable start at boot, execute: "systemctl enable tetra-bluestation.service"
+# to disable start at boot, execute: "systemctl disable tetra-bluestation.service"
+# see log with "journalctl -f -t chrt"
+
+[Unit]
+Description=tetra-bluestation
+Requires=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/tetra-bluestation/
+ExecStart=/usr/bin/chrt 99 /home/pi/tetra-bluestation/target/release/tetra-bluestation ./my-bs-config.toml
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
