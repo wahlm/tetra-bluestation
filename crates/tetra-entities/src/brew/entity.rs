@@ -306,7 +306,7 @@ impl BrewEntity {
                     uuid,
                     gssi
                 );
-                self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi);
+                self.send_d_tx_ceased(queue, call.call_id, call.dest_gssi, call.ts);
                 self.finalize_call(queue, call.call_id, call.ts, call.dest_gssi);
             }
         }
