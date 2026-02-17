@@ -208,7 +208,7 @@ impl CircuitMgr {
         match self.open_circuit(dir, circuit) {
             Ok(circuit) => Ok(circuit),
             Err(e) => {
-                let _ = allocator.release(owner, ts);
+                let _ = timeslot_alloc.release(owner, ts);
                 Err(e)
             }
         }

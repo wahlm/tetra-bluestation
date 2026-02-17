@@ -4,7 +4,6 @@ use tetra_core::TimeslotAllocator;
 use tetra_core::freqs::FreqInfo;
 
 use super::stack_config_soapy::CfgSoapySdr;
-use crate::timeslot_alloc::TimeslotAllocator;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "PascalCase")]
