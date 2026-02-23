@@ -11,6 +11,9 @@ use uuid::Uuid;
 
 use super::protocol::*;
 
+const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(30);
+const HEARTBEAT_TIMEOUT: Duration = Duration::from_secs(10);
+
 // ─── Events passed from worker to entity ─────────────────────────
 
 /// Events the Brew worker sends to the BrewEntity
@@ -507,8 +510,6 @@ impl BrewWorker {
 
     /// Main WebSocket message processing loop
     fn message_loop(&mut self, ws: &mut WebSocket<MaybeTlsStream<TcpStream>>) -> Result<(), String> {
-        let heartbeat_interval = Duration::from_secs(2);
-        let heartbeat_timeout = Duration::from_secs(6);
         let mut last_activity_at = Instant::now();
         let mut last_ping_at = Instant::now();
         let mut last_ping_id: Option<u64> = None;
@@ -517,7 +518,7 @@ impl BrewWorker {
 
         loop {
             let now = Instant::now();
-            if now.duration_since(last_ping_at) >= heartbeat_interval {
+            if now.duration_since(last_ping_at) >= HEARTBEAT_INTERVAL {
                 ping_seq = ping_seq.wrapping_add(1);
                 let payload = ping_seq.to_be_bytes().to_vec();
                 if let Err(e) = ws.send(Message::Ping(payload)) {
@@ -528,7 +529,7 @@ impl BrewWorker {
                 last_ping_sent_at = Some(now);
             }
 
-            if now.duration_since(last_activity_at) >= heartbeat_timeout {
+            if now.duration_since(last_activity_at) >= HEARTBEAT_TIMEOUT {
                 return Err("heartbeat timeout".to_string());
             }
 
