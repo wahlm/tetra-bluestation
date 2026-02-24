@@ -14,6 +14,10 @@ pub struct SoapySdrIoCfg {
     /// SXceiver configuration
     #[serde(default)]
     pub iocfg_sxceiver: Option<SXceiverCfg>,
+
+    /// Pluto timestamp  configuration
+    #[serde(default)]
+    pub iocfg_pluto: Option<PlutoCfg>,
 }
 
 impl SoapySdrIoCfg {
@@ -24,6 +28,8 @@ impl SoapySdrIoCfg {
             "lime"
         } else if self.iocfg_sxceiver.is_some() {
             "sx"
+        } else if self.iocfg_pluto.is_some() {
+            "plutosdr"
         } else {
             "unknown"
         }
@@ -36,6 +42,7 @@ impl Default for SoapySdrIoCfg {
             iocfg_usrpb2xx: None,
             iocfg_limesdr: None,
             iocfg_sxceiver: None,
+            iocfg_pluto: None,
         }
     }
 }
@@ -70,6 +77,18 @@ pub struct SXceiverCfg {
     pub rx_gain_pga: Option<f64>,
     pub tx_gain_dac: Option<f64>,
     pub tx_gain_mixer: Option<f64>,
+}
+
+/// Configuration for Pluto timestamp
+#[derive(Debug, Clone, Deserialize)]
+pub struct PlutoCfg {
+    pub rx_ant: Option<String>,
+    pub tx_ant: Option<String>,
+    pub rx_gain_pga: Option<f64>,
+    pub tx_gain_pga: Option<f64>,
+    pub usb_direct: Option<bool>,
+    pub timestamp_every: Option<usize>,
+    pub loopback: Option<bool>,
 }
 
 /// SoapySDR configuration

@@ -204,6 +204,26 @@ impl SoapyIo {
                     sdr_settings.tx_gain = tx_gains;
                 }
             }
+            "plutosdr" => {
+                if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_pluto {
+                    // Override antenna settings if specified
+                    if let Some(ref ant) = cfg.rx_ant {
+                        sdr_settings.rx_ant = Some(ant.clone());
+                    }
+                    if let Some(ref ant) = cfg.tx_ant {
+                        sdr_settings.tx_ant = Some(ant.clone());
+                    }
+
+                    // Override gain settings
+                    let mut rx_gains = Vec::new();
+                    rx_gains.push(Self::get_gain_or_default("PGA", cfg.rx_gain_pga, &sdr_settings));
+                    sdr_settings.rx_gain = rx_gains;
+
+                    let mut tx_gains = Vec::new();
+                    tx_gains.push(Self::get_gain_or_default("PGA", cfg.tx_gain_pga, &sdr_settings));
+                    sdr_settings.tx_gain = tx_gains;
+                }
+            }
             _ => {
                 tracing::warn!("Unknown SoapySDR driver '{}', using default settings", driver);
             }

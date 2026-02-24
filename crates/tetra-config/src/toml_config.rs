@@ -10,7 +10,7 @@ use toml::Value;
 use super::stack_config_brew::{CfgBrewDto, apply_brew_patch};
 
 use super::stack_config::{CfgCellInfo, CfgNetInfo, CfgPhyIo, PhyBackend, SharedConfig, StackConfig, StackMode, StackState};
-use super::stack_config_soapy::{CfgSoapySdr, LimeSdrCfg, SXceiverCfg, UsrpB2xxCfg};
+use super::stack_config_soapy::{CfgSoapySdr, LimeSdrCfg, SXceiverCfg, UsrpB2xxCfg, PlutoCfg};
 
 /// Build `SharedConfig` from a TOML configuration file
 pub fn from_toml_str(toml_str: &str) -> Result<SharedConfig, Box<dyn std::error::Error>> {
@@ -156,6 +156,18 @@ fn apply_phy_io_patch(dst: &mut CfgPhyIo, src: PhyIoDto) {
                 rx_gain_pga: sx_dto.rx_gain_pga,
                 tx_gain_dac: sx_dto.tx_gain_dac,
                 tx_gain_mixer: sx_dto.tx_gain_mixer,
+            });
+        }
+
+        if let Some(sx_dto) = soapy_dto.iocfg_pluto {
+            soapy_cfg.io_cfg.iocfg_pluto = Some(PlutoCfg {
+                rx_ant: sx_dto.rx_ant,
+                tx_ant: sx_dto.tx_ant,
+                rx_gain_pga: sx_dto.rx_gain_pga,
+                tx_gain_pga: sx_dto.tx_gain_pga,
+                loopback: sx_dto.loopback,
+                timestamp_every: sx_dto.timestamp_every,
+                usb_direct: sx_dto.usb_direct,
             });
         }
 
@@ -309,6 +321,9 @@ struct SoapySdrDto {
     #[serde(default)]
     pub iocfg_sxceiver: Option<SXceiverDto>,
 
+    #[serde(default)]
+    pub iocfg_pluto: Option<PlutoDto>,
+
     #[serde(flatten)]
     extra: HashMap<String, Value>,
 }
@@ -340,6 +355,17 @@ struct SXceiverDto {
     pub rx_gain_pga: Option<f64>,
     pub tx_gain_dac: Option<f64>,
     pub tx_gain_mixer: Option<f64>,
+}
+
+#[derive(Deserialize)]
+struct PlutoDto {
+    pub rx_ant: Option<String>,
+    pub tx_ant: Option<String>,
+    pub rx_gain_pga: Option<f64>,
+    pub tx_gain_pga: Option<f64>,
+    pub loopback: Option<bool>,
+    pub timestamp_every: Option<usize>,
+    pub usb_direct: Option<bool>,
 }
 
 #[derive(Default, Deserialize)]
