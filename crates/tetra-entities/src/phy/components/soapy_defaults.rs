@@ -26,7 +26,7 @@ impl SdrSettings {
             (_, "LimeSDR-Mini_v2") => Self::defaults_limesdr_mini_v2(),
             ("sx", _) => Self::defaults_sxceiver(),
             ("uhd", _) | ("b200", _) => Self::defaults_usrp_b2x0(),
-            ("pluto", _) => Self::defaults_pluto(),
+            ("PlutoSDR", _) => Self::defaults_pluto(),
             _ => Self::unknown(),
         }
     }
