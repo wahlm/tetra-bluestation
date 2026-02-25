@@ -125,6 +125,23 @@ impl SoapyIo {
                 use_get_hardware_time = false;
             }
         }
+        // Add custom args based on driver type
+        let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
+        match driver {
+            "plutosdr" => {
+                if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_pluto {
+                    if let Some(ref usb_direct) = cfg.usb_direct {
+                        dev_args.set("usb_direct", usb_direct?"1":"0");
+                    } 
+                    if let Some(ref timestamp_every) = cfg.timestamp_every {
+                        dev_args.set("timestamp_every", timestamp_every.to_string);
+                    } 
+                    if let Some(ref loopback) = cfg.loopback {
+                        dev_args.set("loopback", loopback?"1":"0");
+                    }
+                }  
+            } 
+        } 
 
         let dev = soapycheck!("open SoapySDR device", soapysdr::Device::new(dev_args));
 
@@ -137,7 +154,6 @@ impl SoapyIo {
         let mut sdr_settings = SdrSettings::get_defaults(&driver_key, &hardware_key);
 
         // Apply user configuration overrides based on driver type
-        let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
         match driver {
             "uhd" => {
                 if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_usrpb2xx {
