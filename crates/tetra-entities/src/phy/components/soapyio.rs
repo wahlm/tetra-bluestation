@@ -130,17 +130,19 @@ impl SoapyIo {
         match driver {
             "plutosdr" => {
                 if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_pluto {
-                    if let Some(ref usb_direct) = cfg.usb_direct {
-                        dev_args.set("usb_direct", usb_direct?"1":"0");
+                    if let Some(usb_direct) = cfg.usb_direct {
+                        dev_args.set("usb_direct", if usb_direct {"1"} else {"0"});
                     } 
                     if let Some(ref timestamp_every) = cfg.timestamp_every {
-                        dev_args.set("timestamp_every", timestamp_every.to_string);
+                        dev_args.set("timestamp_every", timestamp_every.to_string());
                     } 
-                    if let Some(ref loopback) = cfg.loopback {
-                        dev_args.set("loopback", loopback?"1":"0");
+                    if let Some(loopback) = cfg.loopback {
+                        dev_args.set("loopback", if loopback {"1"} else {"0"});
                     }
                 }  
             } 
+            _ => {
+            }
         } 
 
         let dev = soapycheck!("open SoapySDR device", soapysdr::Device::new(dev_args));
