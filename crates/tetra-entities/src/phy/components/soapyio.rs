@@ -133,12 +133,18 @@ impl SoapyIo {
                     if let Some(usb_direct) = cfg.usb_direct {
                         dev_args.set("usb_direct", if usb_direct {"1"} else {"0"});
                     } 
+                    if let Some(direct) = cfg.direct {
+                        dev_args.set("direct", if direct {"1"} else {"0"});
+                    } 
                     if let Some(ref timestamp_every) = cfg.timestamp_every {
                         dev_args.set("timestamp_every", timestamp_every.to_string());
                     } 
                     if let Some(loopback) = cfg.loopback {
                         dev_args.set("loopback", if loopback {"1"} else {"0"});
                     }
+                    if let Some(ref uri) = cfg.uri {
+                        dev_args.set("uri", uri.to_string());
+                    } 
                 }  
             } 
             _ => {

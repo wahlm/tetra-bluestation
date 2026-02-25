@@ -86,7 +86,9 @@ pub struct PlutoCfg {
     pub tx_ant: Option<String>,
     pub rx_gain_pga: Option<f64>,
     pub tx_gain_pga: Option<f64>,
+    pub uri: Option<String>,
     pub usb_direct: Option<bool>,
+    pub direct: Option<bool>,
     pub timestamp_every: Option<usize>,
     pub loopback: Option<bool>,
 }

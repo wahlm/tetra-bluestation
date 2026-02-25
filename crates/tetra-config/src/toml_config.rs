@@ -165,9 +165,11 @@ fn apply_phy_io_patch(dst: &mut CfgPhyIo, src: PhyIoDto) {
                 tx_ant: sx_dto.tx_ant,
                 rx_gain_pga: sx_dto.rx_gain_pga,
                 tx_gain_pga: sx_dto.tx_gain_pga,
+                uri: sx_dto.uri,
                 loopback: sx_dto.loopback,
                 timestamp_every: sx_dto.timestamp_every,
                 usb_direct: sx_dto.usb_direct,
+                direct: sx_dto.direct,
             });
         }
 
@@ -363,9 +365,11 @@ struct PlutoDto {
     pub tx_ant: Option<String>,
     pub rx_gain_pga: Option<f64>,
     pub tx_gain_pga: Option<f64>,
+    pub uri: Option<String>,
     pub loopback: Option<bool>,
     pub timestamp_every: Option<usize>,
     pub usb_direct: Option<bool>,
+    pub direct: Option<bool>,
 }
 
 #[derive(Default, Deserialize)]
