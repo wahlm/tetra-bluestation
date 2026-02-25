@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use tetra_config::SharedConfig;
+use tetra_config::bluestation::SharedConfig;
 use tetra_core::{BitBuffer, Direction, Sap, SsiType, TdmaTime, TetraAddress, tetra_entities::TetraEntity, unimplemented_log};
 use tetra_core::{TimeslotOwner, TxReceipt, TxReporter};
 use tetra_pdus::cmce::enums::disconnect_cause::DisconnectCause;

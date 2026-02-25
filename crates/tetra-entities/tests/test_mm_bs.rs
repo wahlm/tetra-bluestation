@@ -1,7 +1,7 @@
 mod common;
 
 use common::{ComponentTest, default_test_config};
-use tetra_config::StackMode;
+use tetra_config::bluestation::StackMode;
 use tetra_core::tetra_entities::TetraEntity;
 use tetra_core::{BitBuffer, Sap, SsiType, TdmaTime, TetraAddress, debug};
 use tetra_saps::lmm::LmmMleUnitdataInd;

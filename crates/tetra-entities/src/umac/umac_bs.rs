@@ -1,6 +1,6 @@
 use std::panic;
 
-use tetra_config::SharedConfig;
+use tetra_config::bluestation::SharedConfig;
 use tetra_core::freqs::FreqInfo;
 use tetra_core::tetra_entities::TetraEntity;
 use tetra_core::{BitBuffer, Direction, PhyBlockNum, Sap, SsiType, TdmaTime, TetraAddress, Todo, assert_warn, unimplemented_log};
@@ -113,13 +113,13 @@ impl UmacBs {
             freq_offset_index: FreqInfo::freq_offset_hz_to_id(c.cell.freq_offset_hz).unwrap(),
             duplex_spacing: c.cell.duplex_spacing_id,
             reverse_operation: c.cell.reverse_operation,
-            num_of_csch: 0,
+            num_of_csch: 0, // Common secondary control channels
             ms_txpwr_max_cell: 5,
             rxlev_access_min: 3,
             access_parameter: 7,
             radio_dl_timeout: 3,
             cck_id: None,
-            hyperframe_number: Some(0),
+            hyperframe_number: Some(0), // Updated dynamically in scheduler
             option_field: SysinfoOptFieldFlag::DefaultDefForAccCodeA,
             ts_common_frames: None,
             default_access_code: Some(def_access),
@@ -148,7 +148,7 @@ impl UmacBs {
         let system_wide_services = Self::get_system_wide_services_state(config);
         let mle_sysinfo_pdu = DMleSysinfo {
             location_area: c.cell.location_area,
-            subscriber_class: 65535, // All subscriber classes allowed
+            subscriber_class: c.cell.subscriber_class,
             bs_service_details: BsServiceDetails {
                 registration: c.cell.registration,
                 deregistration: c.cell.deregistration,
@@ -156,29 +156,29 @@ impl UmacBs {
                 no_minimum_mode: c.cell.no_minimum_mode,
                 migration: c.cell.migration,
                 system_wide_services,
-                voice_service: true,
-                circuit_mode_data_service: false,
-                sndcp_service: false,
-                aie_service: false,
-                advanced_link: false,
+                voice_service: c.cell.voice_service,
+                circuit_mode_data_service: c.cell.circuit_mode_data_service,
+                sndcp_service: c.cell.sndcp_service,
+                aie_service: c.cell.aie_service,
+                advanced_link: c.cell.advanced_link,
             },
         };
 
         let mac_sync_pdu = MacSync {
-            system_code: 1,
+            system_code: c.cell.system_code,
             colour_code: c.cell.colour_code,
-            time: TdmaTime::default(),
-            sharing_mode: 0, // Continuous transmission
-            ts_reserved_frames: 0,
-            u_plane_dtx: false,
-            frame_18_ext: false,
+            time: TdmaTime::default(), // replaced dynamically in scheduler
+            sharing_mode: c.cell.sharing_mode,
+            ts_reserved_frames: c.cell.ts_reserved_frames,
+            u_plane_dtx: c.cell.u_plane_dtx,
+            frame_18_ext: c.cell.frame_18_ext,
         };
 
         let mle_sync_pdu = DMleSync {
             mcc: c.net.mcc,
             mnc: c.net.mnc,
             neighbor_cell_broadcast: 2, // Broadcast supported, but enquiry not supported
-            cell_load_ca: 0,
+            cell_load_ca: 0,            // TODO implement dynamic setting. 0 = info unavailable
             late_entry_supported: c.cell.late_entry_supported,
         };
 

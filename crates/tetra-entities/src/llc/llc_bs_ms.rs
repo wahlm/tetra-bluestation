@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::panic;
 
 use crate::{MessageQueue, TetraEntityTrait};
-use tetra_config::SharedConfig;
+use tetra_config::bluestation::SharedConfig;
 use tetra_core::tetra_entities::TetraEntity;
 use tetra_core::{BitBuffer, Sap, SsiType, TdmaTime, TetraAddress, TxReporter, unimplemented_log};
 use tetra_saps::lcmc::enums::alloc_type::ChanAllocType;
@@ -29,6 +29,8 @@ pub struct ExpectedInAck {
     pub ts: u8,
     /// Optional TxReporter, used to acknowledge reception by target MS
     pub tx_reporter: Option<TxReporter>,
+    // Optional retransmission buffer, to allow for automatic retransmission of the PDU if no acknowledgement is received
+    pub retransmission_buf: Option<BitBuffer>,
 }
 
 /// Struct that maintains state for an ACK we still need to send back.
@@ -102,6 +104,7 @@ impl Llc {
             addr,
             ts: t.t,
             tx_reporter,
+            retransmission_buf: None,
         });
     }
 

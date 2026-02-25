@@ -2,7 +2,7 @@ mod common;
 
 use common::{ComponentTest, default_test_config};
 use std::time::Duration;
-use tetra_config::StackMode;
+use tetra_config::bluestation::StackMode;
 use tetra_core::debug::setup_logging_verbose;
 use tetra_core::tetra_entities::TetraEntity;
 use tetra_core::{Sap, TdmaTime};

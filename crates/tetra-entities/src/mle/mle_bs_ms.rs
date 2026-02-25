@@ -1,6 +1,6 @@
 use crate::mle::components::mle_router::MleRouter;
 use crate::{MessageQueue, TetraEntityTrait};
-use tetra_config::SharedConfig;
+use tetra_config::bluestation::SharedConfig;
 use tetra_core::tetra_entities::TetraEntity;
 use tetra_core::{BitBuffer, Sap, unimplemented_log};
 use tetra_saps::lcmc::LcmcMleUnitdataInd;
