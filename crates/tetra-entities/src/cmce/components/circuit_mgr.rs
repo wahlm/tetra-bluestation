@@ -8,7 +8,7 @@ use tetra_saps::{
 };
 
 const D_SETUP_REPEATS: i32 = 1;
-const LATE_ENTRY_INTERVAL_TIMESLOTS: i32 = multiframes!(20);
+const LATE_ENTRY_INTERVAL_TIMESLOTS: i32 = multiframes!(5);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CircuitErr {
@@ -307,7 +307,7 @@ impl CircuitMgr {
             tasks = self.close_expired_circuits(tasks);
 
             // Next, go through channels, see if D-SETUPs need to be sent
-            // Late entry: resend D-SETUP every 20 multiframes (5 seconds)
+            // Late entry: resend D-SETUP every 5 seconds
             for circuit in self.dl.iter() {
                 if let Some(circuit) = circuit {
                     let age = circuit.ts_created.age(dltime);
@@ -319,7 +319,7 @@ impl CircuitMgr {
                             .get_or_insert_with(Vec::new)
                             .push(CircuitMgrCmd::SendDSetup(circuit.call_id, circuit.usage, circuit.ts));
                     }
-                    // Late entry: resend every 20 multiframes
+                    // Late entry: resend every 5 seconds
                     else if age % LATE_ENTRY_INTERVAL_TIMESLOTS == 0 {
                         tasks
                             .get_or_insert_with(Vec::new)

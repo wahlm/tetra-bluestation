@@ -651,7 +651,7 @@ impl CcBsSubentity {
                         // Get our cached D-SETUP, build a prim and send it down the stack
                         let Some((pdu, dest_addr)) = self.cached_setups.get_mut(&call_id) else {
                             tracing::error!("No cached D-SETUP for call id {}", call_id);
-                            return;
+                            continue;
                         };
                         // Update transmission_grant based on current call state:
                         // During hangtime (nobody transmitting), use NotGranted;
