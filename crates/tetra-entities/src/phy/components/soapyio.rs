@@ -93,6 +93,7 @@ impl SoapyIo {
             .expect("SoapySdr config must be set for SoapySdr PhyIo");
         let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
         let dev_args_str = &[("driver", driver)];
+        // soapysdr::configure_logging();
 
         // Get PPM corrected freqs
         let (dl_corrected, _) = soapy_cfg.dl_freq_corrected();
@@ -145,7 +146,8 @@ impl SoapyIo {
                     if let Some(ref uri) = cfg.uri {
                         dev_args.set("uri", uri.to_string());
                     } 
-                }  
+                }
+                use_get_hardware_time = false;  
             } 
             _ => {
             }

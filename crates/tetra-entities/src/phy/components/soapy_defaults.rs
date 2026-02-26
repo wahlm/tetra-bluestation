@@ -94,8 +94,8 @@ impl SdrSettings {
     pub fn defaults_pluto() -> Self {
         SdrSettings {
             name: "Pluto".to_string(),
-            fs_bs: 600e3,
-            fs_monitor: 600e3, // monitoring is not really possible?
+            fs_bs: 1e6,
+            fs_monitor: 1e6, // monitoring is not really possible?
             rx_ant: Some("A_BALANCED".to_string()),
             tx_ant: Some("A".to_string()),
             rx_gain: vec![("PGA".to_string(), 20.0)],
