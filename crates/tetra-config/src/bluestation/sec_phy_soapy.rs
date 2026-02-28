@@ -165,7 +165,7 @@ pub struct SXceiverDto {
 }
 
 #[derive(Deserialize)]
-struct PlutoDto {
+pub struct PlutoDto {
     pub rx_ant: Option<String>,
     pub tx_ant: Option<String>,
     pub rx_gain_pga: Option<f64>,
