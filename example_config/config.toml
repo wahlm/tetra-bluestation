@@ -66,6 +66,16 @@ tx_ant = "TX/RX"
 rx_gain_pga = 50.0
 tx_gain_pga = 35.0
 
+# Pluto+ with timestamping
+# [phy_io.soapysdr.iocfg_pluto]
+# rx_ant = "A_BALANCED"
+# tx_ant = "A"
+# rx_gain_pga = 20.0
+# tx_gain_pga = 89.0
+# direct = true
+# timestamp_every = 1500
+# loopback = false
+
 ###############################################################################
 
 # Network Information
