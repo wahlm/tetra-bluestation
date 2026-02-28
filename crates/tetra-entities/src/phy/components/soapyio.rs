@@ -93,6 +93,7 @@ impl SoapyIo {
             .expect("SoapySdr config must be set for SoapySdr PhyIo");
         let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
         let dev_args_str = &[("driver", driver)];
+        // soapysdr::configure_logging();
 
         // Get PPM corrected freqs
         let (dl_corrected, _) = soapy_cfg.dl_freq_corrected();
@@ -125,6 +126,32 @@ impl SoapyIo {
                 use_get_hardware_time = false;
             }
         }
+        // Add custom args based on driver type
+        let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
+        match driver {
+            "plutosdr" => {
+                if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_pluto {
+                    if let Some(usb_direct) = cfg.usb_direct {
+                        dev_args.set("usb_direct", if usb_direct {"1"} else {"0"});
+                    } 
+                    if let Some(direct) = cfg.direct {
+                        dev_args.set("direct", if direct {"1"} else {"0"});
+                    } 
+                    if let Some(ref timestamp_every) = cfg.timestamp_every {
+                        dev_args.set("timestamp_every", timestamp_every.to_string());
+                    } 
+                    if let Some(loopback) = cfg.loopback {
+                        dev_args.set("loopback", if loopback {"1"} else {"0"});
+                    }
+                    if let Some(ref uri) = cfg.uri {
+                        dev_args.set("uri", uri.to_string());
+                    } 
+                }
+                use_get_hardware_time = false;  
+            } 
+            _ => {
+            }
+        } 
 
         let dev = soapycheck!("open SoapySDR device", soapysdr::Device::new(dev_args));
 
@@ -137,7 +164,6 @@ impl SoapyIo {
         let mut sdr_settings = SdrSettings::get_defaults(&driver_key, &hardware_key);
 
         // Apply user configuration overrides based on driver type
-        let driver = soapy_cfg.io_cfg.get_soapy_driver_name();
         match driver {
             "uhd" => {
                 if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_usrpb2xx {
@@ -201,6 +227,26 @@ impl SoapyIo {
                     let mut tx_gains = Vec::new();
                     tx_gains.push(Self::get_gain_or_default("DAC", cfg.tx_gain_dac, &sdr_settings));
                     tx_gains.push(Self::get_gain_or_default("MIXER", cfg.tx_gain_mixer, &sdr_settings));
+                    sdr_settings.tx_gain = tx_gains;
+                }
+            }
+            "plutosdr" => {
+                if let Some(cfg) = &soapy_cfg.io_cfg.iocfg_pluto {
+                    // Override antenna settings if specified
+                    if let Some(ref ant) = cfg.rx_ant {
+                        sdr_settings.rx_ant = Some(ant.clone());
+                    }
+                    if let Some(ref ant) = cfg.tx_ant {
+                        sdr_settings.tx_ant = Some(ant.clone());
+                    }
+
+                    // Override gain settings
+                    let mut rx_gains = Vec::new();
+                    rx_gains.push(Self::get_gain_or_default("PGA", cfg.rx_gain_pga, &sdr_settings));
+                    sdr_settings.rx_gain = rx_gains;
+
+                    let mut tx_gains = Vec::new();
+                    tx_gains.push(Self::get_gain_or_default("PGA", cfg.tx_gain_pga, &sdr_settings));
                     sdr_settings.tx_gain = tx_gains;
                 }
             }
