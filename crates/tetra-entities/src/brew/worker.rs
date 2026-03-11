@@ -307,15 +307,16 @@ impl BrewWorker {
                     break;
                 }
                 Err(e) => {
-                    tracing::error!("BrewWorker: connection error: {}", e);
+                    tracing::error!(
+                        "BrewWorker: connection error: {}, reconnecting in {:?}",
+                        e,
+                        self.brew_config.reconnect_delay
+                    );
                     let _ = self.event_sender.send(BrewEvent::Disconnected(e.clone()));
-                    tracing::info!("BrewWorker: reconnecting in {:?}", self.brew_config.reconnect_delay);
                     std::thread::sleep(self.brew_config.reconnect_delay);
                 }
             }
         }
-
-        tracing::info!("BrewWorker stopped");
     }
 
     fn user_agent() -> String {
@@ -366,7 +367,7 @@ impl BrewWorker {
 
         // ── Handle 401 Unauthorized → Digest Auth ──
         if status_line.contains("401") {
-            tracing::info!("BrewWorker: server requires Digest Auth (401)");
+            tracing::debug!("BrewWorker: server requires Digest Auth (401)");
 
             // Find WWW-Authenticate header
             let www_auth = lines
@@ -444,7 +445,7 @@ impl BrewWorker {
         if let Some(pos) = body_start {
             let endpoint = response[pos + 4..].trim().to_string();
             if endpoint.starts_with('/') {
-                tracing::info!("BrewWorker: got endpoint: {}", endpoint);
+                tracing::debug!("BrewWorker: got endpoint: {}", endpoint);
                 return Ok(endpoint);
             }
             return Err(format!("invalid endpoint path: {}", endpoint));
@@ -460,7 +461,7 @@ impl BrewWorker {
         // Step 2: Connect WebSocket to the endpoint
         let scheme = if self.brew_config.tls { "wss" } else { "ws" };
         let ws_url = format!("{}://{}:{}{}", scheme, self.brew_config.host, self.brew_config.port, endpoint);
-        tracing::info!("BrewWorker: connecting WebSocket to {}", ws_url);
+        tracing::debug!("BrewWorker: connecting WebSocket to {}", ws_url);
 
         // Build request with User-Agent and subprotocol headers.
         // The TetraPack server sends a Sec-WebSocket-Protocol in its response,
@@ -479,7 +480,7 @@ impl BrewWorker {
 
         let (mut ws, _response) = tungstenite::connect(request).map_err(|e| format!("WebSocket connect failed: {}", e))?;
 
-        tracing::info!("BrewWorker: WebSocket connected");
+        tracing::debug!("BrewWorker: WebSocket connected");
         let _ = self.event_sender.send(BrewEvent::Connected);
 
         // Set non-blocking for polling and TCP_NODELAY as recommended

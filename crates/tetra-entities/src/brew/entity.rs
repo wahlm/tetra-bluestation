@@ -304,13 +304,13 @@ impl BrewEntity {
         while let Ok(event) = self.event_receiver.try_recv() {
             match event {
                 BrewEvent::Connected => {
-                    tracing::info!("BrewEntity: connected to TetraPack server");
+                    tracing::debug!("BrewEntity: connected to TetraPack server");
                     self.connected = true;
                     self.resync_subscribers();
                     self.set_network_connected(true);
                 }
                 BrewEvent::Disconnected(reason) => {
-                    tracing::warn!("BrewEntity: disconnected: {}", reason);
+                    tracing::debug!("BrewEntity: disconnected: {}", reason); // Already warned in worker
                     self.set_network_connected(false);
                     // Release all active calls
                     self.release_all_calls(queue);
@@ -1134,7 +1134,7 @@ impl BrewEntity {
 
 impl Drop for BrewEntity {
     fn drop(&mut self) {
-        tracing::info!("BrewEntity: shutting down, sending graceful disconnect");
+        tracing::debug!("BrewEntity: shutting down, sending graceful disconnect");
         let _ = self.command_sender.send(BrewCommand::Disconnect);
 
         // Give the worker thread time to send DEAFFILIATE + DEREGISTER and close
@@ -1144,7 +1144,7 @@ impl Drop for BrewEntity {
             loop {
                 if handle.is_finished() {
                     let _ = handle.join();
-                    tracing::info!("BrewEntity: worker thread joined cleanly");
+                    tracing::debug!("BrewEntity: worker thread joined cleanly");
                     break;
                 }
                 if start.elapsed() >= timeout {

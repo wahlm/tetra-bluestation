@@ -222,11 +222,9 @@ impl UmacBs {
         if is_effective != self.system_wide_services {
             self.system_wide_services = is_effective;
             self.channel_scheduler.set_system_wide_services_state(is_effective);
-            if is_effective {
-                tracing::info!("UmacBs: system_wide_services ENABLED");
-            } else {
-                tracing::warn!("UmacBs: system_wide_services DISABLED");
-            }
+
+            // Should already be signalled at SwMI interface level
+            tracing::debug!("UmacBs: system_wide_services {}", if is_effective { "ENABLED" } else { "DISABLED" });
         }
     }
 
