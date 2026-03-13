@@ -6,6 +6,12 @@ pub fn is_active(config: &SharedConfig) -> bool {
     config.config().brew.is_some()
 }
 
+/// Returns true if the SDS over Brew feature is enabled
+#[inline]
+pub fn feature_sds_enabled(config: &SharedConfig) -> bool {
+    config.config().brew.as_ref().map_or(false, |brew| brew.feature_sds_enabled)
+}
+
 /// Returns true if the configured Brew server is TetraPack (core.tetrapack.online)
 fn is_tetrapack(config: &SharedConfig) -> bool {
     let Some(brew_config) = &config.config().brew else {

@@ -122,6 +122,7 @@ fn test_sds_brew_forward() {
         password: None,
         reconnect_delay: Duration::from_secs(1),
         jitter_initial_latency_frames: 0,
+        feature_sds_enabled: true,
         whitelisted_ssis: None,
     });
     let mut test = ComponentTest::from_config(config, Some(dltime));
@@ -326,6 +327,7 @@ fn test_u_status_brew_forward() {
         password: None,
         reconnect_delay: Duration::from_secs(1),
         jitter_initial_latency_frames: 0,
+        feature_sds_enabled: true,
         whitelisted_ssis: None,
     });
     let mut test = ComponentTest::from_config(config, Some(dltime));

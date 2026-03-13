@@ -73,7 +73,7 @@ impl SdsBsSubentity {
         } else if is_local_group {
             tracing::info!("SDS: group delivery: {} -> GSSI {}", source_ssi, dest_ssi);
             self.send_d_sds_data(queue, message.dltime, source_ssi, dest_ssi, SsiType::Gssi, pdu.user_defined_data);
-        } else if brew::is_active(&self.config)
+        } else if brew::feature_sds_enabled(&self.config)
             && (brew::is_brew_issi_routable(&self.config, dest_ssi) || brew::is_tetrapack_sds_service_issi(&self.config, dest_ssi))
         {
             tracing::info!("SDS: forwarding to Brew: {} -> {}", source_ssi, dest_ssi);
