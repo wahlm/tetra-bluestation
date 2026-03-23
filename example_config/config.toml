@@ -37,7 +37,7 @@ ppm_err = 0.0                       # Adjust if your SDR has a non-negligible tu
 # rx_gain_lna = 18.0
 # rx_gain_tia = 6.0
 # rx_gain_pga = 10.0
-# tx_gain_pad = 18.0
+# tx_gain_pad = 22.0
 # tx_gain_iamp = 3.0
 
 # Sane defaults for LimeSDR Mini v2
@@ -47,7 +47,7 @@ ppm_err = 0.0                       # Adjust if your SDR has a non-negligible tu
 # rx_gain_lna = 18.0
 # rx_gain_tia = 6.0
 # rx_gain_pga = 10.0
-# tx_gain_pad = 18.0
+# tx_gain_pad = 22.0
 # tx_gain_iamp = 3.0
 
 # Sane defaults for SXceiver
@@ -58,6 +58,18 @@ ppm_err = 0.0                       # Adjust if your SDR has a non-negligible tu
 # rx_gain_pga = 16.0
 # tx_gain_dac = 9.0
 # tx_gain_mixer = 30.0
+
+# Sane defaults for Original Adalm Pluto and Pluto+
+# !!! See Wiki for full parameter breakdown and setup requirements.
+# [phy_io.soapysdr.iocfg_pluto]
+# rx_ant = "A_BALANCED"
+# tx_ant = "A"
+# rx_gain_pga = 20.0
+# tx_gain_pga = 89.0
+# uri = "ip:192.168.42.42"  # Pluto+ only, do not set for original Pluto. Other options: "usb:1.3.5", or hostname.
+# direct = true #Advanced driver parameter. Do not change unless really needed.
+# timestamp_every = 1500 #Advanced driver parameter. Do not change unless really needed.
+# loopback = false #Advanced driver parameter. Do not change unless really needed.
 
 # Sane defaults for Ettus USRP B210 (and probably B200)
 [phy_io.soapysdr.iocfg_usrpb2xx]

@@ -23,7 +23,7 @@ impl MleBroadcast {
         let time_broadcast = config.config().cell.timezone.clone();
         Self {
             config,
-            last_broadcast_type: BroadcastType::NetworkTime,
+            last_broadcast_type: BroadcastType::None,
             time_broadcast,
         }
     }
