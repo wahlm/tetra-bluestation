@@ -3,31 +3,31 @@
 # Installation: (as root or with sudo)
 # - copy file to "/etc/systemd/system"
 # - adapt your user/group and paths, sample assumes:
-#   - user/group pi,
-#   - installation in /home/pi/tetra-bluestation
-#   - configuration in /home/pi/bluestation-config.toml
+#   - user/group are both "user",
+#   - installation in /home/user/tetra-bluestation
+#   - configuration in /home/user/bluestation-bs-config.toml
 # - execute "systemctl daemon-reload"
 #
 # Usage:
-# - start service with "systemctl start tetra-bluestation.service"
-# - show state with "systemctl status tetra-bluestation.service"
-# - stop service with "systemctl stop tetra-bluestation.service"
-# - to enable start at boot, execute: "systemctl enable tetra-bluestation.service"
-# - to disable start at boot, execute: "systemctl disable tetra-bluestation.service"
-# - see log with "journalctl -f -t chrt"
+# - start service with "systemctl start bluestation-bs.service"
+# - show state with "systemctl status bluestation-bs.service"
+# - stop service with "systemctl stop bluestation-bs.service"
+# - to enable start at boot, execute: "systemctl enable bluestation-bs.service"
+# - to disable start at boot, execute: "systemctl disable bluestation-bs.service"
+# - see log with "journalctl -f -t bluestation-bs"
 
 [Unit]
 Description=TETRA BlueStation base station service
 Requires=network.target
 
 [Service]
-User=pi
-Group=pi
+User=user
+Group=user
 Type=simple
 CPUSchedulingPolicy=fifo
 CPUSchedulingPriority=73
-WorkingDirectory=/home/pi/tetra-bluestation/
-ExecStart=/home/pi/tetra-bluestation/target/release/tetra-bluestation /home/pi/bluestation-config.toml
+WorkingDirectory=/home/user/tetra-bluestation/
+ExecStart=/home/user/tetra-bluestation/target/release/bluestation-bs /home/user/bluestation-bs-config.toml
 KillSignal=SIGINT
 
 [Install]
