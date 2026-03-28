@@ -20,10 +20,11 @@ Requires=network.target
 [Service]
 User=pi
 Group=pi
-LimitRTPRIO=99
 Type=simple
+CPUSchedulingPriority=73
+LimitRTPRIO=73
 WorkingDirectory=/home/pi/tetra-bluestation/
-ExecStart=/usr/bin/chrt 99 /home/pi/tetra-bluestation/target/release/tetra-bluestation ./local-bs-config.toml
+ExecStart=/home/pi/tetra-bluestation/target/release/tetra-bluestation ./local-bs-config.toml
 KillSignal=SIGINT
 
 [Install]
