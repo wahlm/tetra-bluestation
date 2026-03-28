@@ -1,11 +1,14 @@
-# sample systemd service file for tetra-bluestation
+# Sample systemd service file for tetra-bluestation
 #
-# (either get root or add "sudo" to each command)
+# Installation: (as root or with sudo)
 # - copy file to "/etc/systemd/system"
-# - adapt your pathes/user/group, sample assumes user/group pi and
-#   installation in /home/pi/tetra-bluestation
-#   and configuration in local-bs-config.toml in installation directory
+# - adapt your user/group and paths, sample assumes:
+#   - user/group pi,
+#   - installation in /home/pi/tetra-bluestation
+#   - configuration in /home/pi/bluestation-config.toml
 # - execute "systemctl daemon-reload"
+#
+# Usage:
 # - start service with "systemctl start tetra-bluestation.service"
 # - show state with "systemctl status tetra-bluestation.service"
 # - stop service with "systemctl stop tetra-bluestation.service"
@@ -14,17 +17,17 @@
 # - see log with "journalctl -f -t chrt"
 
 [Unit]
-Description=tetra-bluestation
+Description=TETRA BlueStation base station service
 Requires=network.target
 
 [Service]
 User=pi
 Group=pi
-Type=simple
+CPUSchedulingPolicy=fifo
 CPUSchedulingPriority=73
-LimitRTPRIO=73
+Type=simple
 WorkingDirectory=/home/pi/tetra-bluestation/
-ExecStart=/home/pi/tetra-bluestation/target/release/tetra-bluestation ./local-bs-config.toml
+ExecStart=/home/pi/tetra-bluestation/target/release/tetra-bluestation /home/pi/bluestation-config.toml
 KillSignal=SIGINT
 
 [Install]
