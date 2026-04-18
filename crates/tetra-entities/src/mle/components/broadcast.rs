@@ -93,7 +93,6 @@ impl MleBroadcast {
                 main_address: TetraAddress {
                     ssi: 0xFFFFFF,
                     ssi_type: SsiType::Gssi, // TODO FIXME is this actually the SMI?
-                    encrypted: false,
                 },
                 link_id: 0,
                 endpoint_id: 0,

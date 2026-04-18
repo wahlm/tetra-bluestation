@@ -137,8 +137,7 @@ fn test_out_fragmented_resource() {
         sdu: BitBuffer::from_bitstr(test_vec),
         handle: 0,
         address: TetraAddress {
-            encrypted: false,
-            ssi_type: SsiType::Ssi,
+            ssi_type: SsiType::Issi,
             ssi: 30128,
         },
         layer2service: Layer2Service::Acknowledged,

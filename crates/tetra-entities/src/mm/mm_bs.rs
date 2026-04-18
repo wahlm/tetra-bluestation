@@ -220,7 +220,7 @@ impl MmBs {
         // Store energy saving mode in client state
         let esm = esi.as_ref().map(|e| e.energy_saving_mode).unwrap_or(EnergySavingMode::StayAlive);
         let _ = self.client_mgr.set_client_energy_saving_mode(issi, esm);
-        
+
         // Process optional GroupIdentityLocationDemand field
         let has_groups = pdu.group_identity_location_demand.is_some();
         let gila = if let Some(gild) = pdu.group_identity_location_demand {

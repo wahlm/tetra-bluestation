@@ -20,7 +20,6 @@ fn test_udata_with_broken_mm_payload() {
         main_address: TetraAddress {
             ssi: 2065022,
             ssi_type: SsiType::Issi,
-            encrypted: false,
         },
         scrambling_code: 864282631,
         endpoint_id: 0,

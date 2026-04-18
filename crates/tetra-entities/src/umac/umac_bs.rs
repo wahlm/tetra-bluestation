@@ -1048,7 +1048,7 @@ impl UmacBs {
             dest: TetraEntity::Llc,
             msg: SapMsgInner::TmaUnitdataInd(TmaUnitdataInd {
                 pdu: Some(sdu),
-                main_address: TetraAddress::new(0, SsiType::Ssi), // Address unknown from MAC-U-SIGNAL
+                main_address: TetraAddress::issi(0), // Address unknown from MAC-U-SIGNAL
                 scrambling_code: prim.scrambling_code,
                 endpoint_id: 0,
                 new_endpoint_id: None,

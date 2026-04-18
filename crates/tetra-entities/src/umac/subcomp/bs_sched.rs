@@ -1416,7 +1416,6 @@ mod tests {
         let mut sched = get_testing_slotter();
         let resreq = ReservationRequirement::Req1Subslot;
         let addr = TetraAddress {
-            encrypted: false,
             ssi_type: SsiType::Issi,
             ssi: 1234,
         };
@@ -1464,7 +1463,6 @@ mod tests {
         let mut sched = get_testing_slotter();
         let resreq1 = ReservationRequirement::Req1Subslot;
         let addr = TetraAddress {
-            encrypted: false,
             ssi_type: SsiType::Issi,
             ssi: 1234,
         };
@@ -1504,7 +1502,6 @@ mod tests {
         let mut sched = get_testing_slotter();
         let ts = TdmaTime::default();
         let addr = TetraAddress {
-            encrypted: false,
             ssi_type: SsiType::Issi,
             ssi: 1234,
         };

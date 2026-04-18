@@ -20,7 +20,6 @@ fn test_u_mm_status_energy_saving() {
         sdu: BitBuffer::from_bitstr(test_vec1),
         handle: 0,
         received_address: TetraAddress {
-            encrypted: false,
             ssi_type: SsiType::Issi,
             ssi: 2040814,
         },
